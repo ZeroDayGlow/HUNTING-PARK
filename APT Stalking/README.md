@@ -1,15 +1,10 @@
-# 🕵️ APT Stalking
 
-Just a threat hunter casually keeping an eye on APT groups...
+# 👀 APT Stalking
 
-Nothing weird. Promise.
+Definitely not stalking.
 
-Inside you'll find:
+Just monitoring APT groups, tracking their TTPs, and turning them into detections.
 
-- MITRE ATT&CK mappings
-- Detection coverage
-- Hunting opportunities
-- Coverage gaps
-- Random reasons why I don't trust PowerShell anymore
-
-Happy Hunting 🎯
+🎯 MITRE ATT&CK
+🛡️ Detection Engineering
+🔍 Threat Hunting
