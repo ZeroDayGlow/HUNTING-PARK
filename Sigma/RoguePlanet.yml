@@ -1,0 +1,37 @@
+title: Rogue Planet LPE Activity (FULL Indicator Hunting)
+status: experimental
+author: ZeroDayGlow
+date: 2026-05-12T00:00:00.000Z
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+detection:
+  selection_TempFolder:
+    TargetFilename|contains: \AppData\Local\Temp\RP_
+  selection_NamedPipe:
+    PipeName|endswith: RoguePlanet
+  negative_selection_wermgr:
+    Image|endswith: \wermgr.exe
+  filter_StandardPath:
+    Image|startswith:
+      - C:\Windows\System32\wermgr.exe
+      - C:\Windows\SysWOW64\wermgr.exe
+  condition: >-
+    (1 of selection_*) or (negative_selection_wermgr and not filter_StandardPath)
+description: This rule detects potential Local Privilege Escalation (LPE)
+  activity related to a threat dubbed 'Rogue Planet'. It monitors for the
+  creation of temporary files in the local AppData directory with a 'RP_' prefix
+  and the usage of a specific named pipe named 'RoguePlanet'. The rule further
+  isolates suspicious behavior by identifying processes that are not the
+  standard Windows Error Reporting Manager (wermgr.exe) executing from its
+  legitimate path.
+falsepositives:
+  - Legitimate software utilizing temporary files with the 'RP_' naming
+    convention in the user's AppData path.
+  - Third-party applications or administrative tools using named pipes with the
+    string 'RoguePlanet' in their name.
+  - Non-malicious use of wermgr.exe from non-standard directories if they belong
+    to custom support or crash reporting software.
+associated_cves:
+  - CVE-2026-50656
