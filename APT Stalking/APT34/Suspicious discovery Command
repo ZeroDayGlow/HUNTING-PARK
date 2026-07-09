@@ -1,0 +1,7 @@
+let Commands = datatable (command:string)["net user","net user/domain","net group \"domain admins\"","net group \"Exchange Trusted Subsystem\" /domains"];
+DeviceEvents
+|extend jf = parse_json(AdditionalFields)
+|extend Command = coalesce(tostring(jf.Command), extract("\"Command\"\\s*:\\s*\"([^\"]+)\"",1,AdditionalFields)) //fallback regex
+|where isnotempty(Command)
+|where Command in~ (Commands)
+|project Timestamp,DeviceName,ActionType,InitiatingProcessFileName,InitiatingProcessFolderPath,Command,InitiatingProcessAccountName,DeviceId,ReportId
