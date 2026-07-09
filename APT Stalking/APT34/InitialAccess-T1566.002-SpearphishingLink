@@ -1,0 +1,4 @@
+EmailUrlInfo
+| where UrlDomain in ("rdppath[.]com,cpuproc[.]com,acrobatverify[.]com,tecforsc-001-site1.gtempurl[.]com")
+| join kind=leftouter (EmailEvents | project NetworkMessageId, SenderFromAddress, RecipientEmailAddress, Subject, Timestamp) on NetworkMessageId
+| project Timestamp, SenderFromAddress, RecipientEmailAddress, Subject, Url, UrlDomain
