@@ -1,0 +1,26 @@
+//Description: This rule was created to isolate a specific malicious event that had already been detected and to analyze the events that occurred before and after detection.
+let PivotProcess = "DeviceNetworkEvents" //Add Pivot Process of detection
+|where RemoteURL 
+|project DeviceId, PivotTime=Timestamp;
+let PivotTime= toscalar(PivotProcess | project PivotTime);
+let PivotDevice = toscalar(PivotProcess | project DeviceId);
+let WindowStart = datetime_add("minute", -x, PivotTime); //change x with time "eg: 2"
+let WindowEnd = datetime_add("minute",x,PivotTime);
+let P = DeviceProcessEvents
+|where DeviceId == PivotDevice
+|where Timestamp between (WindowStart .. WindowEnd)
+|project Timestamp, ActionType,FileName,ProcessCommandLine,EventType="Process", InitiatingProcessFileName, AccountName,SHA256;
+let F = DeviceFileEvents
+|where DeviceId == PivotDevice
+|where Timestamp between (WindowStart .. WindowEnd)
+|project Timestamp, EventType="File",ActionType,FileName,FolderPath,InitiatingProcessCommandLine,InitiatingProcessFileName,SHA256;
+let N = DeviceNetworkEvents
+|where DeviceId == PivotDevice
+|where Timestamp between (WindowStart .. WindowEnd)
+|project Timestamp, EventType="Network", ActionType,RemoteUrl,RemoteIP,RemotePort,InitiatingProcessFileName,InitiatingProcessCommandLine;
+let D = AlertEvidence
+|where DeviceId == PivotDevice
+|where Timestamp between (WindowStart .. WindowEnd)
+|project Timestamp, EventType="Alert", SHA256
+union P,F,N
+|order by Timestamp asc 
