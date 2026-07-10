@@ -1,0 +1,37 @@
+title: GentlemanRansomware Detection
+status: experimental
+author: ZeroDayGlow
+date: 2026-07-09T00:00:00.000Z
+logsource:
+  product: windows
+  category: process_creation
+  service: security
+detection:
+  readme:
+    FileName|contains:
+      - README-GENTLEMAN.txt
+  selection_tamper:
+    CommandLine|contains:
+      - Set-MpPreference -DisableRealtimeMonitoring $true -Force
+      - Add-MpPreference -ExclusionProcess
+      - Add-MpPreference -ExclusionPath C:\ -Force
+  selection_destroy:
+    CommandLine|contains:
+      - vssadmin delete shadows /all /quiet
+      - wmic shadowcopy delete
+      - del /f /q C:\Windows\Prefetch\*.*
+      - del /f /q C:\ProgramData\Microsoft\Windows Defender\Support\*.*
+      - del /f /q %SystemRoot%\System32\LogFiles\RDP\*.*
+  condition: 1 of selection_* or readme
+description: This rule detects activities characteristic of the 'Gentleman'
+  ransomware, including the creation of a specific ransom note file
+  ('README-GENTLEMAN.txt'), attempts to tamper with Windows Defender security
+  preferences, and the destruction of system recovery artifacts such as Volume
+  Shadow Copies and various system logs/prefetch files.
+falsepositives:
+  - Authorized system administrators performing maintenance using Microsoft
+    Defender PowerShell cmdlets.
+  - Legitimate IT cleanup scripts that remove Prefetch, LogFiles, or support
+    folders during system optimization.
+  - Security assessment tools attempting to verify the efficacy of security
+    configurations or test backup recovery.
