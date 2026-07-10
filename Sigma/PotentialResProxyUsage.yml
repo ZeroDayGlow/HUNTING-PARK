@@ -1,0 +1,56 @@
+title: Potential Residential Proxy Usage (CrowdStrike Falcon)
+id: 2b7f8d91-9c1a-4c9d-8d6f-1a3c2b9d0e11
+status: experimental
+description: Detects potential residential proxy usage based on network connections to known proxy-related ports and proxy infrastructure indicators in CrowdStrike Falcon logs.
+author: ZeroDayGlow
+date: 2026-06-25
+
+tags:
+  - attack.command_and_control
+  - attack.t1090
+  - attack.t1573
+
+logsource:
+  product: crowdstrike
+  category: network_connection
+
+detection:
+
+  # -------------------------
+  # Proxy-like ports
+  # -------------------------
+  proxy_ports:
+    RemotePort:
+      - 1080
+      - 9050
+      - 3128
+      - 8118
+      - 8000
+      - 8080
+      - 8888
+      - 1337
+      - 4444
+      - 6667
+
+  # -------------------------
+  # Suspicious process making the connection
+  # -------------------------
+  proxy_process:
+    ImageFileName|contains:
+      - 'python'
+      - 'node'
+      - 'java'
+      - 'curl'
+      - 'wget'
+      - 'chrome'
+      - 'msedge'
+      - 'powershell'
+
+  condition: proxy_ports and proxy_process
+
+falsepositives:
+  - Corporate proxy / Zscaler / VPN
+  - Dev tools and automation scripts
+  - Browser normal traffic
+
+level: medium
