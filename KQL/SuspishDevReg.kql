@@ -1,0 +1,20 @@
+// Correlates a risky Entra sign-in with a device registration by the same user within 3 hours
+let lookback = 7d;
+let risky_signins = SigninLogs
+| where TimeGenerated > ago(lookback)
+| where ResultType == 0
+| where RiskLevelDuringSignIn =~ "high" or RiskState in~ ("atRisk", "confirmedCompromised")
+| project SignInTime = TimeGenerated, UserPrincipalName = tolower(UserPrincipalName), SignInIP = IPAddress, AppDisplayName, CorrelationId;
+let device_regs = AuditLogs
+| where TimeGenerated > ago(lookback)
+| where OperationName in~ ("Add device", "Register device")
+| where Result =~ "success"
+| extend Actor = tolower(tostring(InitiatedBy.user.userPrincipalName)), ActorIP = tostring(InitiatedBy.user.ipAddress)
+| extend TargetDevice = tostring(TargetResources[0].displayName)
+| where isnotempty(Actor)
+| project RegTime = TimeGenerated, Actor, ActorIP, TargetDevice, OperationName;
+risky_signins
+| join kind=inner hint.strategy=broadcast (device_regs) on $left.UserPrincipalName == $right.Actor
+| where RegTime >= SignInTime and RegTime <= SignInTime + 3h
+| summarize FirstSignIn = min(SignInTime), FirstReg = min(RegTime), DevicesRegistered = dcount(TargetDevice), DeviceNames = make_set(TargetDevice, 50), SignInIPs = make_set(SignInIP, 10), RegIPs = make_set(ActorIP, 10) by UserPrincipalName
+| order by DevicesRegistered desc
